@@ -344,6 +344,17 @@ Error generating stack: `+l.message+`
         sec3.style.paddingTop='16px';
         sec3.style.borderTop='1px solid #f3f4f6';
         const redBtnDiv = redBtn.closest('div.flex, div.mt-3') || redBtn.parentElement;
+        // Ensure Long press is INSIDE red button, not outside
+        if(redBtn && !redBtn.innerHTML.includes('Long press for 5 sec')){
+          redBtn.style.height='52px';
+          redBtn.style.display='flex';
+          redBtn.style.flexDirection='column';
+          redBtn.style.alignItems='center';
+          redBtn.style.justifyContent='center';
+          redBtn.innerHTML = '<div id="__lpProgress" style="position:absolute;left:0;top:0;height:100%;width:0%;background:#fca5a5;"></div><span style="position:relative;z-index:10;font-size:14px;font-weight:700;line-height:1.1;">Full app reset</span><span style="position:relative;z-index:10;font-size:11px;font-weight:400;line-height:1.1;margin-top:2px;">Long press for 5 sec</span>';
+          redBtn.style.position='relative';
+          redBtn.style.overflow='hidden';
+        }
         if(redBtnDiv){
           redBtnDiv.style.display='flex';
           redBtnDiv.style.justifyContent='center';
@@ -353,13 +364,7 @@ Error generating stack: `+l.message+`
           sec3.appendChild(redBtn);
         }
 
-        const lpText = document.createElement('p');
-        lpText.textContent = 'Long press for 5 sec';
-        lpText.style.fontSize='11px';
-        lpText.style.marginTop='6px';
-        lpText.style.textAlign='center';
-        lpText.style.display='block';
-        sec3.appendChild(lpText);
+        // Long press is INSIDE red button, not outside - removed outside creation
 
         if(eraseText){
           eraseText.style.display='block';
