@@ -251,132 +251,120 @@ Error generating stack: `+l.message+`
 <script>
 (function(){
   function finalFix(){
-    try{
-      const h3s = Array.from(document.querySelectorAll('h3')).filter(h=>h.textContent && h.textContent.includes('Reset & Defaults'));
-      h3s.forEach(h3=>{
-        const container = h3.closest('div.bg-white');
-        if(!container || container.dataset.finalFixed==='1') return;
-
-        const blueBtn = Array.from(container.querySelectorAll('button')).find(b=>b.textContent.trim()==='Save as default settings');
-        const greenBtn = Array.from(container.querySelectorAll('button')).find(b=>b.textContent.trim()==='Restore default settings');
-        let redBtn = document.getElementById('__lpBtn');
-        if(!redBtn) redBtn = Array.from(document.querySelectorAll('button')).find(b=>b.textContent.includes('Full app reset'));
+      try{
+        const container = document.querySelector('[class*="Reset"]')?.parentElement?.parentElement || document.querySelector('div.mt-4')?.parentElement;
+        if(!container) return;
+        // Find buttons by text
+        const allBtns = Array.from(document.querySelectorAll('button'));
+        const blueBtn = allBtns.find(b=>b.textContent.includes('Save as default settings'));
+        const greenBtn = allBtns.find(b=>b.textContent.includes('Restore default settings'));
+        const redBtn = document.getElementById('__lpBtn') || allBtns.find(b=>b.textContent.includes('Full app reset'));
         if(!blueBtn || !greenBtn || !redBtn) return;
+        
+        // Prevent re-running if already correctly ordered (check sec ids)
+        if(container.querySelector('#__sec1') && container.querySelector('#__sec2') && container.querySelector('#__sec3')){
+          // Ensure order is correct
+          const sec1 = container.querySelector('#__sec1');
+          const sec2 = container.querySelector('#__sec2');
+          const sec3 = container.querySelector('#__sec3');
+          // If green text is inside sec3, move it back to sec2
+          const greenTextInSec3 = sec3.querySelector('p');
+          const redWarning = Array.from(sec3.querySelectorAll('p')).find(p=>p.textContent.includes('This will erase'));
+          const greenTextAtBottom = Array.from(document.querySelectorAll('p')).find(p=>p.textContent.includes('Restore original stock data'));
+          if(greenTextAtBottom && sec3.contains(greenTextAtBottom) && !sec2.contains(greenTextAtBottom)){
+            // Move green text back to sec2
+            if(redWarning) {
+              sec3.removeChild(greenTextAtBottom);
+              sec2.appendChild(greenTextAtBottom);
+            }
+          }
+          return;
+        }
 
-        // Style red button same size as blue/green
-        redBtn.style.backgroundColor = '#fecaca';
-        redBtn.style.color = '#991b1b';
-        redBtn.style.border = '2px solid #ef4444';
-        redBtn.style.boxShadow = '0 2px 6px rgba(0,0,0,0.15)';
-        redBtn.style.fontWeight = '700';
-        redBtn.style.minWidth = '220px';
-        redBtn.style.height = '40px';
-        redBtn.style.padding = '0 32px';
-        redBtn.style.borderRadius = '12px';
-        redBtn.style.fontSize = '14px';
-        redBtn.style.display = 'flex';
-        redBtn.style.alignItems = 'center';
-        redBtn.style.justifyContent = 'center';
-        redBtn.innerHTML = 'Full app reset';
+        // Clean: find existing texts
+        const blueText = Array.from(document.querySelectorAll('p')).find(p=>p.textContent.includes('Save all input data as defaults'));
+        const greenText = Array.from(document.querySelectorAll('p')).find(p=>p.textContent.includes('Restore original stock data and clear overrides'));
+        const redText = Array.from(document.querySelectorAll('p')).find(p=>p.textContent.includes('This will erase and clear all input data'));
 
-        const blueText = Array.from(container.querySelectorAll('p')).find(p=>p.textContent.includes('Save all input data as defaults'));
-        const greenText1 = Array.from(container.querySelectorAll('p')).find(p=>p.textContent.includes('Restore original stock data and clear overrides'));
-        const greenText2 = Array.from(container.querySelectorAll('p')).find(p=>p.textContent.includes('Persists via localStorage'));
-        const eraseText = Array.from(document.querySelectorAll('p')).find(p=>p.textContent.includes('This will erase and clear all input data'));
+        // Ensure red button has Long press INSIDE
+        if(redBtn && !redBtn.innerHTML.includes('Long press for 5 sec')){
+          redBtn.style.height='52px';
+          redBtn.style.minWidth='220px';
+          redBtn.style.display='flex';
+          redBtn.style.flexDirection='column';
+          redBtn.style.alignItems='center';
+          redBtn.style.justifyContent='center';
+          redBtn.style.position='relative';
+          redBtn.style.overflow='hidden';
+          redBtn.style.border='2px solid #dc2626';
+          redBtn.innerHTML = '<div id="__lpProgress" style="position:absolute;left:0;top:0;height:100%;width:0%;background:#fca5a5;"></div><span style="position:relative;z-index:10;font-size:14px;font-weight:700;line-height:1.1;">Full app reset</span><span style="position:relative;z-index:10;font-size:11px;font-weight:400;line-height:1.1;margin-top:2px;">Long press for 5 sec</span>';
+        }
 
+        // Create ordered wrapper
         const ordered = document.createElement('div');
-        ordered.style.display='flex';
-        ordered.style.flexDirection='column';
-        ordered.style.alignItems='center';
         ordered.style.width='100%';
-
+        
         const sec1 = document.createElement('div');
+        sec1.id='__sec1';
         sec1.style.display='flex';
         sec1.style.flexDirection='column';
         sec1.style.alignItems='center';
         sec1.style.width='100%';
         sec1.style.marginTop='16px';
-        const btnDiv1 = blueBtn.closest('div.flex, div.mt-3') || blueBtn.parentElement;
-        sec1.appendChild(btnDiv1);
+        const bDiv1 = blueBtn.closest('div.flex, div.mt-3') || blueBtn.parentElement;
+        bDiv1.style.display='flex'; bDiv1.style.justifyContent='center'; bDiv1.style.width='100%';
+        sec1.appendChild(bDiv1);
         if(blueText){
-          blueText.style.display='block';
-          blueText.style.marginTop='12px';
-          blueText.style.textAlign='center';
-          blueText.style.width='100%';
-          blueText.style.padding='0 8px';
-          blueText.style.fontSize='11px';
+          blueText.style.display='block'; blueText.style.marginTop='12px'; blueText.style.textAlign='center'; blueText.style.width='100%'; blueText.style.fontSize='12px';
           sec1.appendChild(blueText);
         }
 
         const sec2 = document.createElement('div');
+        sec2.id='__sec2';
         sec2.style.display='flex';
         sec2.style.flexDirection='column';
         sec2.style.alignItems='center';
         sec2.style.width='100%';
-        sec2.style.marginTop='24px';
+        sec2.style.marginTop='32px';
         sec2.style.paddingTop='16px';
         sec2.style.borderTop='1px solid #f3f4f6';
-        const btnDiv2 = greenBtn.closest('div.flex, div.mt-3') || greenBtn.parentElement;
-        sec2.appendChild(btnDiv2);
-        if(greenText1){
-          greenText1.style.display='block';
-          greenText1.style.marginTop='12px';
-          greenText1.style.textAlign='center';
-          greenText1.style.width='100%';
-          greenText1.style.fontSize='12px';
-          sec2.appendChild(greenText1);
-        }
-        if(greenText2){
-          greenText2.style.display='block';
-          greenText2.style.marginTop='4px';
-          greenText2.style.textAlign='center';
-          greenText2.style.width='100%';
-          greenText2.style.fontSize='11px';
-          sec2.appendChild(greenText2);
+        const bDiv2 = greenBtn.closest('div.flex, div.mt-3') || greenBtn.parentElement;
+        bDiv2.style.display='flex'; bDiv2.style.justifyContent='center'; bDiv2.style.width='100%';
+        sec2.appendChild(bDiv2);
+        if(greenText){
+          greenText.style.display='block'; greenText.style.marginTop='12px'; greenText.style.textAlign='center'; greenText.style.width='100%'; greenText.style.fontSize='12px';
+          sec2.appendChild(greenText);
         }
 
         const sec3 = document.createElement('div');
+        sec3.id='__sec3';
         sec3.style.display='flex';
         sec3.style.flexDirection='column';
         sec3.style.alignItems='center';
         sec3.style.width='100%';
-        sec3.style.marginTop='24px';
+        sec3.style.marginTop='32px';
         sec3.style.paddingTop='16px';
         sec3.style.borderTop='1px solid #f3f4f6';
-        const redBtnDiv = redBtn.closest('div.flex, div.mt-3') || redBtn.parentElement;
-        // Ensure Long press is INSIDE red button, not outside
-        if(redBtn && !redBtn.innerHTML.includes('Long press for 5 sec')){
-          redBtn.style.height='52px';
-          redBtn.style.display='flex';
-          redBtn.style.flexDirection='column';
-          redBtn.style.alignItems='center';
-          redBtn.style.justifyContent='center';
-          redBtn.innerHTML = '<div id="__lpProgress" style="position:absolute;left:0;top:0;height:100%;width:0%;background:#fca5a5;"></div><span style="position:relative;z-index:10;font-size:14px;font-weight:700;line-height:1.1;">Full app reset</span><span style="position:relative;z-index:10;font-size:11px;font-weight:400;line-height:1.1;margin-top:2px;">Long press for 5 sec</span>';
-          redBtn.style.position='relative';
-          redBtn.style.overflow='hidden';
-        }
-        if(redBtnDiv){
-          redBtnDiv.style.display='flex';
-          redBtnDiv.style.justifyContent='center';
-          redBtnDiv.style.width='100%';
-          sec3.appendChild(redBtnDiv);
+        const rDiv = redBtn.closest('div.flex, div.mt-3, div#\_\_lpWrapper') || redBtn.parentElement;
+        if(rDiv){
+          rDiv.style.display='flex'; rDiv.style.flexDirection='column'; rDiv.style.alignItems='center'; rDiv.style.justifyContent='center'; rDiv.style.width='100%';
+          // If rDiv is wrapper containing red button + other p, only take button
+          const onlyBtn = rDiv.querySelector('#__lpBtn') ? rDiv : redBtn;
+          if(rDiv.id==='__lpWrapper' || rDiv.querySelector('#__lpBtn')){
+            // wrapper contains button + maybe texts, we need only button inside sec3, and texts separately
+            sec3.appendChild(redBtn);
+          } else {
+            sec3.appendChild(rDiv);
+          }
         } else {
           sec3.appendChild(redBtn);
         }
-
-        // Long press is INSIDE red button, not outside - removed outside creation
-
-        if(eraseText){
-          eraseText.style.display='block';
-          eraseText.style.fontSize='11px';
-          eraseText.style.color='#dc2626';
-          eraseText.style.fontWeight='600';
-          eraseText.style.textAlign='center';
-          eraseText.style.marginTop='6px';
-          eraseText.style.width='100%';
-          sec3.appendChild(eraseText);
+        if(redText){
+          redText.style.display='block'; redText.style.fontSize='12px'; redText.style.color='#dc2626'; redText.style.fontWeight='600'; redText.style.textAlign='center'; redText.style.marginTop='8px'; redText.style.width='100%';
+          sec3.appendChild(redText);
         }
 
+        // Replace container content with ordered secs, keeping h3
         const keepH3 = container.querySelector('h3');
         Array.from(container.children).forEach(ch=>{ if(ch!==keepH3) ch.remove(); });
         ordered.appendChild(sec1);
@@ -385,37 +373,14 @@ Error generating stack: `+l.message+`
         container.appendChild(ordered);
         container.dataset.finalFixed='1';
 
-        // Clean duplicates outside
-        const allLong = Array.from(document.querySelectorAll('p, span')).filter(el=>el.textContent.trim()==='Long press for 5 sec');
-        allLong.forEach((el,idx)=>{
-          if(!sec3.contains(el)) el.remove();
-        });
-        const allErase = Array.from(document.querySelectorAll('p')).filter(p=>p.textContent.includes('This will erase and clear all input data'));
-        allErase.forEach((el,idx)=>{
-          if(!sec3.contains(el)) el.remove();
-        });
-        const allRed = Array.from(document.querySelectorAll('button')).filter(b=>b.textContent.includes('Full app reset'));
-        allRed.forEach((b,idx)=>{
-          if(b!==redBtn) {
-            const w = b.closest('#__lpWrap') || b.parentElement;
-            if(w && !sec3.contains(w)) w.remove();
-          }
-        });
-        // Remove extra __lpWrap
-        document.querySelectorAll('#__lpWrap').forEach((w,idx)=>{
-          if(!sec3.contains(w)) {
-            // keep first that contains redBtn, remove others
-            if(!w.contains(redBtn)) w.remove();
-          }
-        });
-      });
-    }catch(e){ console.log('finalFix error', e); }
-  }
-  let attempts=0;
-  const iv=setInterval(()=>{ finalFix(); attempts++; if(attempts>60) clearInterval(iv); },300);
-  window.addEventListener('load', finalFix);
-  document.addEventListener('DOMContentLoaded', finalFix);
-})();
-</script>
-<script>(function(){var loc=location.href.replace(/#.*$/,"");var ATTR_NAMES=["data-product-id","data-productid","data-product_id","product-id","productid","product_id","data-source-entity-id","source-entity-id","source_entity_id","data-product","data-metadata","data-meta"];var DATASET_KEYS=["productId","productid","product_id","sourceEntityId","sourceentityid","source_entity_id","product","metadata","meta"];function readProductId(value){if(typeof value!=="string"||value.length===0)return null;if(/^[0-9]{6,}$/.test(value))return value;var match=value.match(/(?:product(?:_|-)?id|source(?:_|-)?entity(?:_|-)?id)["'=:\s]+([0-9]{6,})/i);return match?match[1]:null}function extractProductId(start){for(var node=start;node&&node!==document.body;node=node.parentElement){for(var i=0;i<ATTR_NAMES.length;i++){var attrValue=node.getAttribute&&node.getAttribute(ATTR_NAMES[i]);var attrProductId=readProductId(attrValue);if(attrProductId)return attrProductId}var dataset=node.dataset||null;if(dataset){for(var j=0;j<DATASET_KEYS.length;j++){var dataValue=dataset[DATASET_KEYS[j]];var dataProductId=readProductId(dataValue);if(dataProductId)return dataProductId}}}return null}function isInlineMediaSlotElement(node){return !!(node&&node.getAttribute&&node.getAttribute("data-clippy-inline-media-slot")!==null)}function findInlineMediaSlot(start){for(var node=start;node&&node!==document.body;node=node.parentElement){if(isInlineMediaSlotElement(node))return node}return null}function readInlineMediaUrl(node){if(!node)return null;return node.getAttribute&&((node.getAttribute("data-clippy-inline-media-url")||node.getAttribute("data-url")||node.getAttribute("data_url")))||node.href||null}function stripHash(url){return String(url).replace(/#.*$/,"")}function urlsMatch(a,b){if(!a||!b)return false;try{return stripHash(new URL(a,loc).href)===stripHash(new URL(b,loc).href)}catch(_){return stripHash(a)===stripHash(b)}}function isFirstPartyReelUrl(value){try{var url=new URL(value,loc);if(url.protocol!=="https:")return false;var host=url.hostname.toLowerCase();var supported=host==="instagram.com"||host.endsWith(".instagram.com")||host==="facebook.com"||host.endsWith(".facebook.com");return supported&&/\/reels?\//i.test(url.pathname)}catch(_){return false}}function isInlineMediaUrlClick(node,href){var slot=findInlineMediaSlot(node);if(!slot)return false;var slotUrl=readInlineMediaUrl(slot);if(slotUrl)return urlsMatch(href,slotUrl);return isFirstPartyReelUrl(href)}function findDataHref(start){for(var node=start;node&&node!==document.body;node=node.parentElement){if(node.getAttribute){var href=node.getAttribute("data-href")||node.getAttribute("data-url");if(href)return{href:href,node:node}}}return null}var nativeOpen=window.open;window.open=function(url){if(parent!==window&&typeof url==="string"&&/^https?:\/\//.test(url)){parent.postMessage({type:"ecto:usercontent-link-click",href:url},"*");return null}return nativeOpen?nativeOpen.apply(window,arguments):null};document.addEventListener("click",function(e){var target=e.target instanceof Element?e.target:null;if(!target)return;if(parent===window)return;var a=target.closest?target.closest("a[href]"):null;if(a&&a.href&&/^https?:\/\//.test(a.href)&&a.href.replace(/#.*$/,"")!==loc){if(isInlineMediaUrlClick(a,a.href))return;var productId=extractProductId(target)||extractProductId(a);if(productId){e.preventDefault();parent.postMessage({type:"ecto-artifact-link-click",productId:productId},"*");return}e.preventDefault();parent.postMessage({type:"ecto:usercontent-link-click",href:a.href},"*");return}var dataHref=findDataHref(target);if(dataHref&&/^https?:\/\//.test(dataHref.href)&&dataHref.href.replace(/#.*$/,"")!==loc){if(isInlineMediaUrlClick(dataHref.node,dataHref.href))return;e.preventDefault();parent.postMessage({type:"ecto:usercontent-link-click",href:dataHref.href},"*")}},true)})();</script><script>(function(){var FOCUS_TYPE="ecto:artifact-focus-request";var CLOSE_TYPE="ecto:artifact-close-request";function focusArtifactDocument(){var body=document.body;if(!body)return;try{window.focus();}catch(e){}if(!body.hasAttribute("tabindex"))body.setAttribute("tabindex","-1");try{body.focus({preventScroll:true});}catch(e){try{body.focus();}catch(e2){}}}window.addEventListener("message",function(event){if(event.source!==window.parent)return;var data=event.data;if(!data||typeof data!=="object"||data.type!==FOCUS_TYPE)return;if(document.readyState==="loading"){document.addEventListener("DOMContentLoaded",focusArtifactDocument,{once:true});return;}focusArtifactDocument();});window.addEventListener("keydown",function(event){if(event.key!=="Escape")return;window.setTimeout(function(){if(event.defaultPrevented)return;window.parent.postMessage({type:CLOSE_TYPE},"*");},0);});})();</script></body>
+        // Remove any duplicate outside
+        document.querySelectorAll('#__lpWrapper').forEach(w=>{ if(!sec3.contains(w)) w.remove(); });
+      }catch(e){ console.log('finalFix error', e); }
+    }
+    let attempts=0;
+    const iv=setInterval(()=>{ finalFix(); attempts++; if(attempts>80) clearInterval(iv); },300);
+    window.addEventListener('load', finalFix);
+    document.addEventListener('DOMContentLoaded', finalFix);
+  })();
+ne-media-url")||node.getAttribute("data-url")||node.getAttribute("data_url")))||node.href||null}function stripHash(url){return String(url).replace(/#.*$/,"")}function urlsMatch(a,b){if(!a||!b)return false;try{return stripHash(new URL(a,loc).href)===stripHash(new URL(b,loc).href)}catch(_){return stripHash(a)===stripHash(b)}}function isFirstPartyReelUrl(value){try{var url=new URL(value,loc);if(url.protocol!=="https:")return false;var host=url.hostname.toLowerCase();var supported=host==="instagram.com"||host.endsWith(".instagram.com")||host==="facebook.com"||host.endsWith(".facebook.com");return supported&&/\/reels?\//i.test(url.pathname)}catch(_){return false}}function isInlineMediaUrlClick(node,href){var slot=findInlineMediaSlot(node);if(!slot)return false;var slotUrl=readInlineMediaUrl(slot);if(slotUrl)return urlsMatch(href,slotUrl);return isFirstPartyReelUrl(href)}function findDataHref(start){for(var node=start;node&&node!==document.body;node=node.parentElement){if(node.getAttribute){var href=node.getAttribute("data-href")||node.getAttribute("data-url");if(href)return{href:href,node:node}}}return null}var nativeOpen=window.open;window.open=function(url){if(parent!==window&&typeof url==="string"&&/^https?:\/\//.test(url)){parent.postMessage({type:"ecto:usercontent-link-click",href:url},"*");return null}return nativeOpen?nativeOpen.apply(window,arguments):null};document.addEventListener("click",function(e){var target=e.target instanceof Element?e.target:null;if(!target)return;if(parent===window)return;var a=target.closest?target.closest("a[href]"):null;if(a&&a.href&&/^https?:\/\//.test(a.href)&&a.href.replace(/#.*$/,"")!==loc){if(isInlineMediaUrlClick(a,a.href))return;var productId=extractProductId(target)||extractProductId(a);if(productId){e.preventDefault();parent.postMessage({type:"ecto-artifact-link-click",productId:productId},"*");return}e.preventDefault();parent.postMessage({type:"ecto:usercontent-link-click",href:a.href},"*");return}var dataHref=findDataHref(target);if(dataHref&&/^https?:\/\//.test(dataHref.href)&&dataHref.href.replace(/#.*$/,"")!==loc){if(isInlineMediaUrlClick(dataHref.node,dataHref.href))return;e.preventDefault();parent.postMessage({type:"ecto:usercontent-link-click",href:dataHref.href},"*")}},true)})();</script><script>(function(){var FOCUS_TYPE="ecto:artifact-focus-request";var CLOSE_TYPE="ecto:artifact-close-request";function focusArtifactDocument(){var body=document.body;if(!body)return;try{window.focus();}catch(e){}if(!body.hasAttribute("tabindex"))body.setAttribute("tabindex","-1");try{body.focus({preventScroll:true});}catch(e){try{body.focus();}catch(e2){}}}window.addEventListener("message",function(event){if(event.source!==window.parent)return;var data=event.data;if(!data||typeof data!=="object"||data.type!==FOCUS_TYPE)return;if(document.readyState==="loading"){document.addEventListener("DOMContentLoaded",focusArtifactDocument,{once:true});return;}focusArtifactDocument();});window.addEventListener("keydown",function(event){if(event.key!=="Escape")return;window.setTimeout(function(){if(event.defaultPrevented)return;window.parent.postMessage({type:CLOSE_TYPE},"*");},0);});})();</script></body>
 </html>
